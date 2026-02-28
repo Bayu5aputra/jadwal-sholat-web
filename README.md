@@ -9,6 +9,10 @@ A modern Astro website to check Indonesian prayer schedules (jadwal sholat and i
 
 ![Jadwal Sholat Web Logo](public/logo-sholat-pray.png)
 
+## Live Demo
+
+- Public URL: https://sholat.next-it.my.id
+
 ## Why This Website
 
 - Fast access to daily and monthly prayer schedules
