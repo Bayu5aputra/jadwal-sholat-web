@@ -1,28 +1,60 @@
 # Jadwal Sholat Web
 
-A neobrutalist Astro website for Indonesian daily prayer schedules (Jadwal Sholat & Imsakiyah), including GPS-based location detection with fallback to Jakarta.
+[![Astro](https://img.shields.io/badge/Astro-5.x-FF5D01?logo=astro&logoColor=white)](https://astro.build)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org)
+[![Platform](https://img.shields.io/badge/Platform-Web-1f2937)](#)
+[![License](https://img.shields.io/badge/License-All%20Rights%20Reserved-111827)](LICENSE)
 
-## Features
+A modern Astro website to check Indonesian prayer schedules (jadwal sholat and imsakiyah), view Hijri calendar data, and use GPS-based location detection with fallback to Jakarta.
 
-- Daily and monthly prayer schedules by province and city/regency in Indonesia
-- Prayer reminder system with adzan/alarm support
-- Hijri calendar conversion and month view
-- GPS-first location detection with IP and Jakarta fallback
-- Responsive neobrutalist interface (desktop and mobile)
-- SEO-ready setup with sitemap and metadata support
+![Jadwal Sholat Web Logo](public/logo-sholat-pray.png)
+
+## Why This Website
+
+- Fast access to daily and monthly prayer schedules
+- Smart location-based experience for Indonesian regions
+- Practical prayer tracking with clear table and screensaver mode
+- Mobile-friendly neobrutalist interface for quick daily use
+
+## Main Features
+
+- Daily prayer times: Imsak, Subuh, Terbit, Dhuha, Dzuhur, Ashar, Maghrib, Isya
+- Province and city/regency filtering across Indonesia
+- GPS-first auto-location with IP and Jakarta fallback
+- Next prayer reminder flow with adzan/alarm support
+- Hijri calendar view and Gregorian-to-Hijri conversion
+- Quick action buttons for Today, Schedule section, and Screensaver mode
+- SEO support with sitemap and canonical URL setup
 
 ## Tech Stack
 
-- Astro
-- TypeScript
+- Astro 5 + TypeScript
 - UnoCSS
-- Astro Sitemap
+- @astrojs/sitemap
+- @astrojs/rss
+- Brutal UI components
+
+## Project Structure
+
+```text
+src/
+  components/
+  layouts/
+  pages/
+    index.astro
+    doa/
+  styles/
+public/
+  audio/
+  fonts/
+  icon/
+```
 
 ## Getting Started
 
 ### Prerequisites
 
-- Node.js 18+ (recommended)
+- Node.js 18+
 - npm (or pnpm/yarn)
 
 ### Installation
@@ -31,46 +63,50 @@ A neobrutalist Astro website for Indonesian daily prayer schedules (Jadwal Shola
 npm install
 ```
 
-### Development
+### Run Development Server
 
 ```bash
 npm run dev
 ```
 
-The local app runs at `http://localhost:4321`.
+Default local URL: `http://localhost:4321`.
 
-### Production Build
+### Build Production
 
 ```bash
 npm run build
 npm run preview
 ```
 
-## Environment Variables
-
-Set `PUBLIC_SITE_URL` for canonical URL generation and sitemap output.
-
-Example:
+## Environment Variable
 
 ```env
 PUBLIC_SITE_URL=https://your-domain.com
 ```
 
-## Project Structure
+Used for canonical URL and sitemap generation.
 
-- `src/pages/index.astro` main prayer schedule page
-- `src/pages/doa/` prayer articles/listing pages
-- `src/components/` shared UI components
-- `src/styles/global.css` global styles
-- `public/` static assets (icons, audio, fonts)
+## Usage Flow
+
+1. Open the website and wait for initial province data to load.
+2. Allow GPS access to auto-select nearest province/city.
+3. If GPS is unavailable, the app falls back to IP lookup or Jakarta default.
+4. Choose month/year and click `Tampilkan` to render schedule data.
+5. Use quick actions for Today, Screensaver mode, and location navigation.
+
+## Notes
+
+- This project is intended for personal portfolio showcase.
+- Code usage is restricted by the custom license.
 
 ## License
 
-This project is proprietary and intended for personal portfolio use.
+Copyright (c) 2026 bayu5aputra. All Rights Reserved.
 
-See [LICENSE](./LICENSE) for full terms.
+This project was created for personal portfolio purposes.
 
-## Contact
+You may not copy, modify, distribute, or use any part of the source code or documentation without the owner's prior written permission.
 
-- GitHub: https://github.com/bayu5aputra
-- Email: bayusaputra.005.003@gmail.com
+Contact: https://github.com/bayu5aputra • bayusaputra.005.003@gmail.com
+
+See full terms in [LICENSE](LICENSE).
