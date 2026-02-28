@@ -1,0 +1,3 @@
+User-agent: *
+Disallow: 
+Sitemap: https://sholat.next-it.my.id/sitemap-index.xml

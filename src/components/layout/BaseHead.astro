@@ -1,0 +1,100 @@
+﻿---
+import LocalFont from '../generic/LocalFont.astro';
+import { ViewTransitions } from 'astro:transitions';
+
+interface Props {
+  title: string;
+  description: string;
+  ogImage?: URL;
+  keywords?: string[];
+}
+
+const canonicalURL = new URL(Astro.url.pathname, Astro.site);
+
+if (Astro.props.ogImage === undefined) {
+  Astro.props.ogImage = new URL('/logo-sholat-pray.png', Astro.url);
+}
+
+const siteName = 'Jadwal Sholat Indonesia';
+const { title, description, ogImage, keywords = [] } = Astro.props;
+const pageTitle = `${siteName} | ${title}`;
+const keywordContent = [
+  'jadwal sholat',
+  'jadwal sholat indonesia',
+  'waktu sholat',
+  'imsakiyah',
+  'subuh dzuhur ashar maghrib isya',
+  ...keywords,
+].join(', ');
+
+const schemaGraph = {
+  '@context': 'https://schema.org',
+  '@graph': [
+    {
+      '@type': 'WebSite',
+      name: siteName,
+      url: canonicalURL.origin,
+      inLanguage: 'id-ID',
+    },
+    {
+      '@type': 'WebPage',
+      name: pageTitle,
+      url: canonicalURL.toString(),
+      description,
+      inLanguage: 'id-ID',
+      isPartOf: {
+        '@type': 'WebSite',
+        name: siteName,
+        url: canonicalURL.origin,
+      },
+    },
+  ],
+};
+---
+
+<head>
+  <LocalFont />
+  <meta charset='utf-8' />
+  <meta name='viewport' content='width=device-width, initial-scale=1' />
+  <meta name='generator' content={Astro.generator} />
+
+  <link
+    rel='alternate'
+    href='/feed.xml'
+    type='application/rss+xml'
+    title={`${siteName} RSS Feed`}
+  />
+
+  <meta name='title' content={pageTitle} />
+  <meta name='description' content={description} />
+  <meta name='keywords' content={keywordContent} />
+  <meta name='robots' content='index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1' />
+  <meta name='author' content={siteName} />
+  <meta name='theme-color' content='#111111' />
+
+  <meta property='og:type' content='website' />
+  <meta property='og:url' content={canonicalURL} />
+  <meta property='og:title' content={pageTitle} />
+  <meta property='og:description' content={description} />
+  <meta property='og:image' content={ogImage} />
+  <meta property='og:site_name' content={siteName} />
+  <meta property='og:locale' content='id_ID' />
+
+  <meta property='twitter:card' content='summary_large_image' />
+  <meta property='twitter:url' content={canonicalURL} />
+  <meta property='twitter:title' content={pageTitle} />
+  <meta property='twitter:description' content={description} />
+  <meta property='twitter:image' content={ogImage} />
+
+  <link rel='canonical' href={canonicalURL} />
+  <link rel='icon' type='image/png' href='/logo-sholat-pray.png' />
+
+  <title>{pageTitle}</title>
+
+  <script type='application/ld+json' set:html={JSON.stringify(schemaGraph)} />
+
+  <ViewTransitions />
+
+  <slot />
+</head>
+

@@ -1,0 +1,6 @@
+## Jadwal Sholat Indonesia ##
+
+Pengembangan dan kustomisasi oleh tim Next-IT
+
+- domain: sholat.next-it.my.id
+- stack: Astro + EQuran.id API Shalat

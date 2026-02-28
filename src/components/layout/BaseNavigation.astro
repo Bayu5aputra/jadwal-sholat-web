@@ -1,0 +1,50 @@
+﻿---
+interface Props {
+  pageTitle?: string;
+}
+
+const navigationItems = [
+  { name: 'Jadwal', url: '/' },
+  { name: 'Doa', url: '/doa/' },
+  { name: 'About', url: '/about/' },
+];
+
+const { pageTitle } = Astro.props;
+---
+
+<header class='border-b-4 border-black flex justify-between p-6 items-center gap-4'>
+  {pageTitle && <h1 class='hidden'>{pageTitle}</h1>}
+  <a href='/' title='Kembali ke halaman utama'>
+    <img src='/logo-sholat-pray.png' alt='Sholat & Pray' class='h-10 w-auto md:h-16' />
+  </a>
+  <nav class='hidden md:inline-block'>
+    <h2 class='hidden'>Navigasi</h2>
+    <ul class='flex gap-8 poppins'>
+      {
+        navigationItems.map((item) => (
+          <li>
+            <a
+              class='text-lg font-medium hover:text-green hover:underline transition-all duration-150 ease-in-out'
+              href={item.url}
+              data-astro-reload
+              target={item.url.startsWith('http') ? '_blank' : undefined}
+              rel={item.url.startsWith('http') ? 'noreferrer' : undefined}
+              title={`Buka ${item.name}`}
+            >
+              {item.name}
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+  </nav>
+  <nav class='md:hidden flex'>
+    <h2 class='hidden'>Navigasi Mobile</h2>
+    <ul class='flex gap-4'>
+      <li><a href='/' data-astro-reload>Jadwal</a></li>
+      <li><a href='/doa/' data-astro-reload>Doa</a></li>
+      <li><a href='/about/' data-astro-reload>About</a></li>
+    </ul>
+  </nav>
+</header>
+

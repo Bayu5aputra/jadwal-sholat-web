@@ -1,0 +1,56 @@
+---
+import Layout from '@layouts/Default.astro';
+import { Card, Button } from '@eliancodes/brutal-ui';
+import { getDoaList, getDoaSlug } from '../../lib/doa';
+
+const doaList = await getDoaList();
+---
+
+<Layout
+  title='Kumpulan Doa Harian'
+  description='Daftar doa harian lengkap dengan bacaan latin dan artinya.'
+  pageTitle='Kumpulan Doa Harian'
+  keywords={['doa harian', 'kumpulan doa', 'doa islam', 'doa harian lengkap']}
+>
+  <main class='bg-green p-6'>
+    <section class='grid gap-6'>
+      <Card>
+        <h2 class='dm-serif text-4xl md:text-6xl leading-tight'>Kumpulan Doa Harian</h2>
+        <p class='outfit mt-4 text-lg md:text-2xl'>
+          Menampilkan {doaList.length} doa.
+        </p>
+      </Card>
+
+      <div class='grid gap-4 md:grid-cols-2'>
+        {
+          doaList.map((item) => (
+            <article class='doa-card'>
+              <h3 class='dm-serif text-2xl'>{item.doa}</h3>
+              {item.latin && <p class='outfit mt-2 text-base md:text-lg'>{item.latin}</p>}
+              {item.artinya && <p class='poppins mt-3 text-sm md:text-base'>{item.artinya}</p>}
+              <div class='mt-4'>
+                <Button href={`/doa/${getDoaSlug(item)}/`}>Lihat Detail Doa &rarr;</Button>
+              </div>
+            </article>
+          ))
+        }
+      </div>
+    </section>
+  </main>
+</Layout>
+
+<style>
+  .doa-card {
+    border: 3px solid #000;
+    background: #fff;
+    padding: 1rem;
+    box-shadow: 5px 5px 0 #000;
+    overflow: hidden;
+  }
+
+  .doa-card h3,
+  .doa-card p {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+</style>

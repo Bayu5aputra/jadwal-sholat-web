@@ -1,0 +1,79 @@
+---
+import Layout from '@layouts/Default.astro';
+import { Button, Card } from '@eliancodes/brutal-ui';
+import { getDoaList, getDoaSlug } from '../../lib/doa';
+
+const doaList = await getDoaList();
+
+export async function getStaticPaths() {
+  const list = await getDoaList();
+  return list.map((item) => ({
+    params: { slug: getDoaSlug(item) },
+    props: { doa: item },
+  }));
+}
+
+interface Props {
+  doa: (typeof doaList)[number];
+}
+
+const { doa } = Astro.props;
+---
+
+<Layout
+  title={doa.doa}
+  description={doa.artinya ?? `Detail doa: ${doa.doa}`}
+  pageTitle={doa.doa}
+  keywords={['doa', 'bacaan doa', 'arti doa']}
+>
+  <main class='bg-pink p-6'>
+    <section class='grid gap-6'>
+      <div>
+        <Button href='/doa/'>&larr; Kembali ke Kumpulan Doa</Button>
+      </div>
+
+      <Card>
+        <h2 class='dm-serif text-4xl md:text-6xl leading-tight'>{doa.doa}</h2>
+
+        {doa.ayat && <p class='arabic mt-6'>{doa.ayat}</p>}
+
+        {doa.latin && (
+          <section class='mt-6'>
+            <h3 class='poppins font-semibold text-lg'>Latin</h3>
+            <p class='outfit mt-2 text-lg md:text-2xl'>{doa.latin}</p>
+          </section>
+        )}
+
+        {doa.artinya && (
+          <section class='mt-6'>
+            <h3 class='poppins font-semibold text-lg'>Artinya</h3>
+            <p class='outfit mt-2 text-lg md:text-2xl'>{doa.artinya}</p>
+          </section>
+        )}
+
+        {doa.source && (
+          <section class='mt-6'>
+            <h3 class='poppins font-semibold text-lg'>Sumber</h3>
+            <p class='outfit mt-2 doa-text'>{doa.source}</p>
+          </section>
+        )}
+      </Card>
+    </section>
+  </main>
+</Layout>
+
+<style>
+  .doa-text {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
+  .arabic {
+    font-size: clamp(1.7rem, 3.2vw, 2.6rem);
+    line-height: 1.8;
+    text-align: right;
+    font-family: serif;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+</style>

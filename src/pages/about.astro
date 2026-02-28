@@ -1,0 +1,76 @@
+---
+import Layout from '@layouts/Default.astro';
+import { Card } from '@eliancodes/brutal-ui';
+---
+
+<Layout
+  title='About - Jadwal Sholat Indonesia'
+  pageTitle='About'
+  description='Informasi API, fitur, dan developer Jadwal Sholat Indonesia.'
+>
+  <main class='p-6'>
+    <section class='grid gap-6'>
+      <Card>
+        <h2 class='dm-serif text-4xl md:text-6xl leading-tight'>About</h2>
+        <p class='outfit mt-4 text-lg md:text-2xl'>
+          Halaman ini berisi sumber API, fitur utama, dan informasi developer.
+        </p>
+      </Card>
+
+      <Card>
+        <h3 class='dm-serif text-2xl md:text-4xl'>API yang Digunakan</h3>
+        <ul class='mt-4 space-y-2 poppins text-sm md:text-base'>
+          <li>
+            EQuran API Shalat:
+            <a class='underline' href='https://equran.id/apidev/shalat' target='_blank' rel='noreferrer'>
+              https://equran.id/apidev/shalat
+            </a>
+          </li>
+          <li>
+            EQuran API Doa:
+            <a class='underline' href='https://equran.id/apidev/doa' target='_blank' rel='noreferrer'>
+              https://equran.id/apidev/doa
+            </a>
+          </li>
+          <li>
+            Aladhan API (Kalender Hijriah):
+            <a class='underline' href='https://aladhan.com/prayer-times-api' target='_blank' rel='noreferrer'>
+              https://aladhan.com/prayer-times-api
+            </a>
+          </li>
+          <li>
+            IP API (fallback lokasi):
+            <a class='underline' href='https://ipapi.co/' target='_blank' rel='noreferrer'>
+              https://ipapi.co/
+            </a>
+          </li>
+        </ul>
+      </Card>
+
+      <Card>
+        <h3 class='dm-serif text-2xl md:text-4xl'>Fitur Utama</h3>
+        <ul class='mt-4 space-y-2 poppins text-sm md:text-base'>
+          <li>Jadwal sholat bulanan per provinsi dan kabupaten/kota.</li>
+          <li>Deteksi lokasi GPS dengan fallback default Jakarta.</li>
+          <li>Notifikasi popup waktu sholat berikutnya.</li>
+          <li>Alarm khusus Imsak dan Terbit.</li>
+          <li>Adzan otomatis untuk waktu sholat utama.</li>
+          <li>Mode layar hari ini (screen saver) + fullscreen.</li>
+          <li>Kalender Hijriah (mode Masehi dan Hijriah murni).</li>
+          <li>Kumpulan doa harian.</li>
+        </ul>
+      </Card>
+
+      <Card>
+        <h3 class='dm-serif text-2xl md:text-4xl'>Developer</h3>
+        <p class='poppins mt-4 text-sm md:text-base'>Built by: Bayu Saputra</p>
+        <p class='poppins mt-2 text-sm md:text-base'>
+          Email:
+          <a class='underline' href='mailto:bayusaputra.005.003@gmail.com'>
+            bayusaputra.005.003@gmail.com
+          </a>
+        </p>
+      </Card>
+    </section>
+  </main>
+</Layout>

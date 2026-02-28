@@ -1,0 +1,2279 @@
+﻿---
+import Layout from '@layouts/Default.astro';
+import { Card } from '@eliancodes/brutal-ui';
+
+const today = new Date();
+const currentMonth = today.getMonth() + 1;
+const currentYear = today.getFullYear();
+---
+
+<Layout
+  title='Jadwal Sholat & Imsakiyah Indonesia'
+  pageTitle='Jadwal Sholat & Imsakiyah Indonesia'
+  description='Cek waktu sholat harian dan imsakiyah sesuai kota Anda.'
+  keywords={['jadwal sholat hari ini', 'jadwal imsakiyah', 'waktu adzan indonesia', 'jadwal sholat per kota']}
+>
+  <main class='prayer-page p-6'>
+    <section class='hero-wrap grid gap-6 md:grid-cols-3'>
+      <div class='md:col-span-2'>
+        <Card>
+          <h2 class='dm-serif text-4xl md:text-6xl leading-tight'>
+            Jadwal Sholat & Imsakiyah Indonesia
+          </h2>
+          <p class='outfit mt-5 text-lg md:text-2xl max-w-3xl'>
+            Cek waktu sholat harian dan imsakiyah sesuai kotamu.
+          </p>
+          <p class='poppins mt-3 text-base md:text-lg'>
+            Pilih provinsi dan kabupaten/kota untuk melihat jadwal sholat lengkap
+            bulanan, termasuk imsak dan subuh.
+          </p>
+          <p class='poppins mt-2 text-base md:text-lg'>
+            Tampilkan jadwal sholat hari ini, besok, hingga satu bulan penuh.
+          </p>
+        </Card>
+      </div>
+      <div>
+        <Card>
+          <h3 class='dm-serif text-2xl md:text-3xl'>Aksi Cepat</h3>
+          <div class='mt-4 grid gap-3'>
+            <button id='cta-choose-location' class='action-btn action-btn--secondary' type='button'>Pilih Lokasi</button>
+            <button id='cta-today' class='action-btn action-btn--secondary' type='button'>Cek Jadwal Hari Ini</button>
+            <button id='cta-screensaver' class='action-btn action-btn--secondary' type='button'>Mode Layar Hari Ini</button>
+            <button id='cta-jadwal' class='action-btn action-btn--secondary' type='button'>Bagian Jadwal</button>
+            <button id='cta-gps' class='action-btn action-btn--secondary' type='button'>Gunakan GPS Sekarang</button>
+          </div>
+        </Card>
+      </div>
+    </section>
+
+    <section id='hasil-jadwal' class='mt-6'>
+      <Card>
+        <h3 class='dm-serif text-2xl md:text-4xl'>Pilih Lokasi</h3>
+        <form id='prayer-form' class='mt-5 grid gap-4 md:grid-cols-4'>
+          <div>
+            <label for='provinsi' class='block poppins text-sm mb-2'>Provinsi</label>
+            <select id='provinsi' name='provinsi' class='field-select w-full' required>
+              <option value=''>Cari provinsi...</option>
+            </select>
+          </div>
+
+          <div>
+            <label for='kabkota' class='block poppins text-sm mb-2'>Kabupaten/Kota</label>
+            <select id='kabkota' name='kabkota' class='field-select w-full' required disabled>
+              <option value=''>Pilih kabupaten/kota...</option>
+            </select>
+          </div>
+
+          <div>
+            <label for='bulan' class='block poppins text-sm mb-2'>Bulan</label>
+            <select id='bulan' name='bulan' class='field-select w-full'>
+              {
+                Array.from({ length: 12 }, (_, index) => {
+                  const value = index + 1;
+                  return (
+                    <option value={value} selected={value === currentMonth}>
+                      {value}
+                    </option>
+                  );
+                })
+              }
+            </select>
+          </div>
+
+          <div>
+            <label for='tahun' class='block poppins text-sm mb-2'>Tahun</label>
+            <input
+              id='tahun'
+              name='tahun'
+              class='field-select w-full'
+              type='number'
+              min='2026'
+              max='2035'
+              value={currentYear}
+              required
+            />
+          </div>
+
+          <div class='md:col-span-4'>
+            <div class='flex flex-wrap gap-3'>
+              <button id='submit-btn' class='action-btn' type='submit'>Tampilkan</button>
+              <button id='reset-btn' class='action-btn action-btn--secondary' type='reset'>Reset</button>
+            </div>
+          </div>
+        </form>
+      </Card>
+    </section>
+
+    <section class='mt-6'>
+      <Card>
+        <h3 class='dm-serif text-2xl md:text-4xl'>Keunggulan</h3>
+        <ul class='mt-4 grid gap-2 poppins text-sm md:text-base md:grid-cols-2'>
+          <li>Jadwal harian & bulanan</li>
+          <li>Imsak, Subuh, Dzuhur, Ashar, Maghrib, Isya</li>
+          <li>Akurat sesuai wilayah</li>
+          <li>Ringan dan cepat diakses</li>
+          <li>Mudah disalin & dibagikan</li>
+          <li>Tampilan ramah mobile</li>
+        </ul>
+      </Card>
+    </section>
+
+    <section class='mt-6'>
+      <Card>
+        <div class='flex items-start justify-between gap-4 flex-wrap'>
+          <div>
+            <h3 class='dm-serif text-2xl md:text-4xl'>Hasil Jadwal</h3>
+            <p id='result-meta' class='poppins mt-2 text-sm md:text-base'>
+              Pilih lokasi, lalu klik tombol Tampilkan.
+            </p>
+          </div>
+          <div id='loading-state' class='hidden poppins text-sm md:text-base'>Memuat data...</div>
+        </div>
+
+        <p id='error-state' class='hidden mt-4 error-box poppins'></p>
+
+        <div class='mt-5 overflow-x-auto'>
+          <table class='schedule-table min-w-full'>
+            <thead>
+              <tr>
+                <th>Tanggal</th>
+                <th>Hari</th>
+                <th>Imsak</th>
+                <th>Subuh</th>
+                <th>Terbit</th>
+                <th>Dhuha</th>
+                <th>Dzuhur</th>
+                <th>Ashar</th>
+                <th>Maghrib</th>
+                <th>Isya</th>
+              </tr>
+            </thead>
+            <tbody id='schedule-body'>
+              <tr>
+                <td colspan='10' class='empty-cell'>Data jadwal belum tersedia.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </Card>
+    </section>
+
+    <section class='mt-6'>
+      <Card>
+        <div class='flex items-start justify-between gap-4 flex-wrap'>
+          <div>
+            <h3 class='dm-serif text-2xl md:text-4xl'>Kalender Hijriah</h3>
+            <p id='hijri-meta' class='poppins mt-2 text-sm md:text-base'>
+              Menampilkan konversi kalender Masehi ke Hijriah.
+            </p>
+          </div>
+          <div id='hijri-loading' class='hidden poppins text-sm md:text-base'>Memuat kalender...</div>
+        </div>
+
+        <div class='mt-4 hijri-controls'>
+          <div class='hijri-toggle' role='tablist' aria-label='Mode Kalender Hijriah'>
+            <button id='hijri-mode-masehi' class='action-btn hijri-mode-btn is-active' type='button'>Mode Masehi</button>
+            <button id='hijri-mode-hijri' class='action-btn hijri-mode-btn action-btn--secondary' type='button'>Mode Hijriah Murni</button>
+          </div>
+          <div id='hijri-masehi-inputs' class='hijri-mode-panel poppins text-sm'>
+            Mengikuti bulan dan tahun pada form jadwal sholat.
+          </div>
+          <div id='hijri-hijri-inputs' class='hijri-mode-panel hidden'>
+            <div class='grid gap-3 md:grid-cols-2'>
+              <div>
+                <label for='hijri-month' class='block poppins text-sm mb-2'>Bulan Hijriah</label>
+                <select id='hijri-month' class='field-select w-full'></select>
+              </div>
+              <div>
+                <label for='hijri-year' class='block poppins text-sm mb-2'>Tahun Hijriah</label>
+                <input id='hijri-year' class='field-select w-full' type='number' min='1300' max='1700' />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <p id='hijri-error' class='hidden mt-4 error-box poppins'></p>
+
+        <div class='mt-5'>
+          <div class='hijri-calendar'>
+            <div class='hijri-calendar__weekdays'>
+              <span>Sen</span>
+              <span>Sel</span>
+              <span>Rab</span>
+              <span>Kam</span>
+              <span>Jum</span>
+              <span>Sab</span>
+              <span>Min</span>
+            </div>
+            <div id='hijri-body' class='hijri-calendar__grid'>
+              <div class='empty-cell'>Data kalender hijriah belum tersedia.</div>
+            </div>
+          </div>
+        </div>
+      </Card>
+    </section>
+
+    <div id='prayer-alert' class='prayer-alert hidden' role='status' aria-live='polite'>
+      <div class='prayer-alert__content'>
+        <p id='prayer-alert-title' class='prayer-alert__title'>Pengingat Sholat Berikutnya</p>
+        <p id='prayer-alert-text' class='prayer-alert__text'></p>
+      </div>
+      <button id='prayer-alert-close' class='prayer-alert__close' type='button' aria-label='Tutup notifikasi'>
+        Tutup
+      </button>
+    </div>
+
+    <div id='screensaver-panel' class='screensaver hidden' aria-hidden='true'>
+      <div class='screensaver__box'>
+        <div class='screensaver__actions'>
+          <button id='screensaver-toggle-fullscreen' class='screensaver__close' type='button' aria-label='Toggle fullscreen'>
+            Fullscreen
+          </button>
+          <button id='screensaver-close' class='screensaver__close' type='button' aria-label='Tutup mode layar'>
+            Tutup
+          </button>
+        </div>
+        <p class='screensaver__label'>Jadwal Sholat Hari Ini</p>
+        <h3 id='screensaver-location' class='screensaver__location'>-</h3>
+        <p id='screensaver-date' class='screensaver__date'>-</p>
+        <p id='screensaver-hijri-date' class='screensaver__hijri-date'>-</p>
+        <p id='screensaver-clock' class='screensaver__clock'>--:--:--</p>
+        <p id='screensaver-next' class='screensaver__next'>Memuat jadwal sholat berikutnya...</p>
+        <div class='screensaver__table-wrap'>
+          <table class='screensaver__table'>
+            <thead>
+              <tr>
+                <th>Imsak</th>
+                <th>Subuh</th>
+                <th>Dzuhur</th>
+                <th>Ashar</th>
+                <th>Maghrib</th>
+                <th>Isya</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr id='screensaver-times-row'>
+                <td>-</td>
+                <td>-</td>
+                <td>-</td>
+                <td>-</td>
+                <td>-</td>
+                <td>-</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </main>
+</Layout>
+
+<style>
+  .prayer-page {
+    background:
+      radial-gradient(circle at 15% 20%, #f4d35e 0, #f4d35e 16%, transparent 16%),
+      radial-gradient(circle at 80% 10%, #9ad1ff 0, #9ad1ff 12%, transparent 12%),
+      linear-gradient(180deg, #fff7d6 0%, #f8f3e8 55%, #ffffff 100%);
+    min-height: calc(100dvh - 140px);
+  }
+
+  .field-select {
+    border: 2px solid #000;
+    background: #fff;
+    padding: 0.62rem 0.75rem;
+    font-family: 'Outfit', sans-serif;
+    min-height: 44px;
+  }
+
+  .field-select:focus {
+    outline: 3px solid #2d7ff9;
+    outline-offset: 2px;
+  }
+
+  .action-btn {
+    border: 2px solid #000;
+    background: #f4d35e;
+    color: #000;
+    padding: 0.7rem 1rem;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+    min-height: 44px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    box-shadow: 6px 6px 0 #000;
+    cursor: pointer;
+  }
+
+  .action-btn:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: 8px 8px 0 #000;
+  }
+
+  .action-btn:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: 4px 4px 0 #000;
+  }
+
+  .action-btn--secondary {
+    background: #fff;
+  }
+
+  .schedule-table {
+    border-collapse: collapse;
+    background: #fff;
+    width: 100%;
+    table-layout: auto;
+    min-width: 980px;
+  }
+
+  .schedule-table th,
+  .schedule-table td {
+    border: 2px solid #000;
+    padding: 0.62rem;
+    text-align: center;
+    vertical-align: middle;
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.92rem;
+    white-space: nowrap;
+  }
+
+  .schedule-table tbody td {
+    text-align: center !important;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .schedule-table thead th {
+    background: #111;
+    color: #fff;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+  }
+
+  .schedule-table tbody tr:nth-child(odd) {
+    background: #fffbef;
+  }
+
+  .hijri-controls {
+    border: 2px solid #000;
+    background: #fff;
+    padding: 0.75rem;
+  }
+
+  .hijri-toggle {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .hijri-mode-btn {
+    min-height: 40px;
+    padding: 0.5rem 0.8rem;
+    font-size: 0.9rem;
+  }
+
+  .hijri-mode-btn.is-active {
+    background: #f4d35e;
+  }
+
+  .hijri-mode-panel {
+    margin-top: 0.75rem;
+  }
+
+  .hijri-calendar {
+    border: 2px solid #000;
+    background: #fff;
+  }
+
+  .hijri-calendar__weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    border-bottom: 2px solid #000;
+    background: #111;
+    color: #fff;
+  }
+
+  .hijri-calendar__weekdays span {
+    border-right: 2px solid #000;
+    padding: 0.55rem 0.4rem;
+    text-align: center;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+    font-size: 0.88rem;
+  }
+
+  .hijri-calendar__weekdays span:last-child {
+    border-right: 0;
+  }
+
+  .hijri-calendar__grid {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+  }
+
+  .hijri-calendar__cell {
+    border-right: 2px solid #000;
+    border-bottom: 2px solid #000;
+    min-height: 118px;
+    padding: 0.45rem;
+    background: #fffdf6;
+  }
+
+  .hijri-calendar__cell:nth-child(7n) {
+    border-right: 0;
+  }
+
+  .hijri-calendar__cell.is-today {
+    background: #ffe16a;
+    box-shadow: inset 0 0 0 3px #000;
+  }
+
+  .hijri-calendar__cell.is-empty {
+    background: #f4f4f4;
+  }
+
+  .hijri-calendar__day {
+    font-family: 'Poppins', sans-serif;
+    font-size: 0.84rem;
+    font-weight: 700;
+  }
+
+  .hijri-calendar__masehi {
+    margin-top: 0.2rem;
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.82rem;
+  }
+
+  .hijri-calendar__hijri {
+    margin-top: 0.24rem;
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.78rem;
+    line-height: 1.35;
+  }
+
+  .hijri-calendar__cell p {
+    display: block;
+    margin: 0;
+    white-space: normal;
+    word-break: break-word;
+  }
+
+  .empty-cell {
+    grid-column: 1 / -1;
+    text-align: center;
+    font-family: 'Poppins', sans-serif;
+    color: #2b2b2b;
+    padding: 1rem 0.8rem;
+  }
+
+  .error-box {
+    border: 2px solid #000;
+    background: #ffd6d6;
+    padding: 0.75rem;
+  }
+
+  .prayer-alert {
+    position: fixed;
+    right: 1rem;
+    bottom: 1rem;
+    max-width: 360px;
+    width: calc(100% - 2rem);
+    border: 3px solid #000;
+    background: #f4d35e;
+    box-shadow: 8px 8px 0 #000;
+    padding: 0.85rem;
+    z-index: 260;
+    display: flex;
+    gap: 0.75rem;
+    align-items: start;
+  }
+
+  .prayer-alert.hidden {
+    display: none !important;
+  }
+
+  .prayer-alert__content {
+    flex: 1;
+  }
+
+  .prayer-alert__title {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 700;
+    font-size: 0.95rem;
+    line-height: 1.3;
+  }
+
+  .prayer-alert__text {
+    margin-top: 0.35rem;
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.92rem;
+    line-height: 1.35;
+  }
+
+  .prayer-alert__close {
+    border: 2px solid #000;
+    background: #fff;
+    font-family: 'Poppins', sans-serif;
+    font-size: 0.8rem;
+    padding: 0.2rem 0.5rem;
+    cursor: pointer;
+  }
+
+  .screensaver {
+    position: fixed;
+    inset: 0;
+    z-index: 220;
+    background:
+      radial-gradient(circle at 20% 15%, rgba(244, 211, 94, 0.22), transparent 35%),
+      radial-gradient(circle at 80% 75%, rgba(154, 209, 255, 0.22), transparent 40%),
+      #0b1220;
+    display: flex;
+    align-items: stretch;
+    justify-content: stretch;
+    padding: 0;
+  }
+
+  .screensaver.hidden {
+    display: none !important;
+  }
+
+  .screensaver__box {
+    width: 100%;
+    min-height: 100dvh;
+    background: transparent;
+    padding: clamp(1rem, 2vw, 2rem);
+    display: flex;
+    flex-direction: column;
+    color: #f4f7ff;
+  }
+
+  .screensaver__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.6rem;
+  }
+
+  .screensaver__close {
+    border: 2px solid #000;
+    background: #f8f3e8;
+    box-shadow: 4px 4px 0 #000;
+    padding: 0.45rem 0.85rem;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+    color: #000;
+    cursor: pointer;
+  }
+
+  .screensaver__label {
+    margin-top: 0.9rem;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+    font-size: 0.95rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #b8c5e6;
+  }
+
+  .screensaver__location {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(2rem, 5vw, 4rem);
+    line-height: 1.08;
+    margin-top: 0.35rem;
+    color: #ffffff;
+  }
+
+  .screensaver__date {
+    font-family: 'Outfit', sans-serif;
+    font-size: clamp(1rem, 2vw, 1.35rem);
+    margin-top: 0.35rem;
+    color: #d9e0f2;
+  }
+
+  .screensaver__hijri-date {
+    font-family: 'Outfit', sans-serif;
+    font-size: clamp(0.95rem, 1.9vw, 1.2rem);
+    margin-top: 0.2rem;
+    color: #c8d5f5;
+  }
+
+  .screensaver__clock {
+    margin-top: 1rem;
+    display: inline-block;
+    width: fit-content;
+    padding: 0.55rem 1rem;
+    border: 3px solid #000;
+    background: #f4d35e;
+    box-shadow: 7px 7px 0 #000;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 700;
+    font-size: clamp(2rem, 9vw, 6rem);
+    letter-spacing: 0.08em;
+    color: #000;
+  }
+
+  .screensaver__next {
+    margin-top: 1rem;
+    font-family: 'Outfit', sans-serif;
+    font-size: clamp(1rem, 2vw, 1.5rem);
+    color: #f6f9ff;
+  }
+
+  .screensaver__table-wrap {
+    margin-top: 1.25rem;
+    overflow-x: auto;
+    border: 3px solid #000;
+    box-shadow: 8px 8px 0 #000;
+    background: #f8f3e8;
+  }
+
+  .screensaver__table {
+    width: 100%;
+    min-width: 560px;
+    border-collapse: collapse;
+  }
+
+  .screensaver__table th,
+  .screensaver__table td {
+    border: 2px solid #000;
+    text-align: center;
+    padding: 0.65rem;
+    white-space: nowrap;
+    color: #000;
+  }
+
+  .screensaver__table th {
+    background: #111;
+    color: #fff;
+    font-family: 'Poppins', sans-serif;
+  }
+
+  .screensaver__table td {
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.05rem;
+    background: #fff;
+    color: #000 !important;
+    font-weight: 600;
+  }
+
+  @media (max-width: 767px) {
+    .schedule-table th,
+    .schedule-table td {
+      font-size: 0.84rem;
+      padding: 0.5rem;
+    }
+
+    .schedule-table th,
+    .schedule-table td {
+      white-space: nowrap;
+    }
+
+    .hijri-calendar__weekdays span {
+      font-size: 0.78rem;
+      padding: 0.45rem 0.2rem;
+    }
+
+    .hijri-calendar {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .hijri-calendar__weekdays,
+    .hijri-calendar__grid {
+      grid-template-columns: repeat(7, minmax(110px, 1fr));
+      min-width: 770px;
+    }
+
+    .hijri-calendar__cell {
+      min-height: 110px;
+      padding: 0.45rem;
+    }
+
+    .hijri-calendar__hijri {
+      font-size: 0.72rem;
+    }
+
+    .prayer-alert {
+      right: 0.75rem;
+      left: 0.75rem;
+      width: auto;
+      bottom: 0.75rem;
+    }
+
+    .screensaver__box {
+      padding: 0.75rem;
+    }
+
+    .screensaver__actions {
+      gap: 0.5rem;
+    }
+
+    .screensaver__close {
+      padding: 0.38rem 0.65rem;
+      font-size: 0.85rem;
+    }
+
+    .screensaver__next,
+    .screensaver__date {
+      font-size: 0.92rem;
+    }
+
+    .hijri-toggle {
+      flex-direction: column;
+    }
+  }
+</style>
+
+<script>
+  const API_BASE = 'https://equran.id/api/v2/shalat';
+
+  const provinsiEl = document.getElementById('provinsi');
+  const kabkotaEl = document.getElementById('kabkota');
+  const bulanEl = document.getElementById('bulan');
+  const tahunEl = document.getElementById('tahun');
+  const formEl = document.getElementById('prayer-form');
+  const submitBtnEl = document.getElementById('submit-btn');
+  const resetBtnEl = document.getElementById('reset-btn');
+  const ctaChooseLocationEl = document.getElementById('cta-choose-location');
+  const ctaTodayEl = document.getElementById('cta-today');
+  const ctaScreensaverEl = document.getElementById('cta-screensaver');
+  const ctaJadwalEl = document.getElementById('cta-jadwal');
+  const ctaFullscreenEl = document.getElementById('cta-fullscreen');
+  const ctaGpsEl = document.getElementById('cta-gps');
+  const hasilJadwalEl = document.getElementById('hasil-jadwal');
+  const loadingEl = document.getElementById('loading-state');
+  const errorEl = document.getElementById('error-state');
+  const resultMetaEl = document.getElementById('result-meta');
+  const scheduleBodyEl = document.getElementById('schedule-body');
+  const hijriMetaEl = document.getElementById('hijri-meta');
+  const hijriLoadingEl = document.getElementById('hijri-loading');
+  const hijriErrorEl = document.getElementById('hijri-error');
+  const hijriBodyEl = document.getElementById('hijri-body');
+  const hijriModeMasehiEl = document.getElementById('hijri-mode-masehi');
+  const hijriModeHijriEl = document.getElementById('hijri-mode-hijri');
+  const hijriMasehiInputsEl = document.getElementById('hijri-masehi-inputs');
+  const hijriHijriInputsEl = document.getElementById('hijri-hijri-inputs');
+  const hijriMonthEl = document.getElementById('hijri-month');
+  const hijriYearEl = document.getElementById('hijri-year');
+  const prayerAlertEl = document.getElementById('prayer-alert');
+  const prayerAlertTitleEl = document.getElementById('prayer-alert-title');
+  const prayerAlertTextEl = document.getElementById('prayer-alert-text');
+  const prayerAlertCloseEl = document.getElementById('prayer-alert-close');
+  const screensaverPanelEl = document.getElementById('screensaver-panel');
+  const screensaverCloseEl = document.getElementById('screensaver-close');
+  const screensaverToggleFullscreenEl = document.getElementById('screensaver-toggle-fullscreen');
+  const screensaverLocationEl = document.getElementById('screensaver-location');
+  const screensaverDateEl = document.getElementById('screensaver-date');
+  const screensaverHijriDateEl = document.getElementById('screensaver-hijri-date');
+  const screensaverClockEl = document.getElementById('screensaver-clock');
+  const screensaverNextEl = document.getElementById('screensaver-next');
+  const screensaverTimesRowEl = document.getElementById('screensaver-times-row');
+
+  const emptyRow = `<tr><td colspan="10" class="empty-cell">Data jadwal belum tersedia.</td></tr>`;
+  const emptyHijriRow = `<div class="empty-cell">Data kalender hijriah belum tersedia.</div>`;
+  const DEFAULT_PROVINSI_CANDIDATES = ['DKI JAKARTA', 'DAERAH KHUSUS IBUKOTA JAKARTA', 'JAKARTA'];
+  const DEFAULT_KABKOTA_CANDIDATES = [
+    'KOTA JAKARTA PUSAT',
+    'JAKARTA PUSAT',
+    'KOTA ADM JAKARTA PUSAT',
+    'JAKARTA',
+  ];
+  const PRAYER_ORDER = [
+    { key: 'imsak', label: 'Imsak' },
+    { key: 'subuh', label: 'Subuh' },
+    { key: 'dzuhur', label: 'Dzuhur' },
+    { key: 'ashar', label: 'Ashar' },
+    { key: 'maghrib', label: 'Maghrib' },
+    { key: 'isya', label: 'Isya' },
+  ];
+  const PRAYER_ENTRY_EVENTS = [
+    { key: 'imsak', label: 'Imsak', type: 'alarm' },
+    { key: 'subuh', label: 'Subuh', type: 'adzan' },
+    { key: 'terbit', label: 'Terbit', type: 'alarm' },
+    { key: 'dzuhur', label: 'Dzuhur', type: 'adzan' },
+    { key: 'ashar', label: 'Ashar', type: 'adzan' },
+    { key: 'maghrib', label: 'Maghrib', type: 'adzan' },
+    { key: 'isya', label: 'Isya', type: 'adzan' },
+  ];
+  const ADZAN_AUDIO_PATH = '/audio/adzan.mp3';
+  const ALARM_AUDIO_PATH = '/audio/alarm.mp3';
+  const PROVINCES_WITA = [
+    'BALI',
+    'NUSA TENGGARA BARAT',
+    'NUSA TENGGARA TIMUR',
+    'KALIMANTAN SELATAN',
+    'KALIMANTAN TIMUR',
+    'KALIMANTAN UTARA',
+    'SULAWESI',
+    'GORONTALO',
+  ];
+  const PROVINCES_WIT = ['MALUKU', 'PAPUA'];
+  const HIJRI_MONTH_NAMES = [
+    'Muharram',
+    'Safar',
+    'Rabiul Awal',
+    'Rabiul Akhir',
+    'Jumadil Awal',
+    'Jumadil Akhir',
+    'Rajab',
+    "Sya'ban",
+    'Ramadhan',
+    'Syawal',
+    "Dzulqa'dah",
+    'Dzulhijjah',
+  ];
+  const GPS_LOCATION_HINTS = [
+    { lat: 5.55, lon: 95.32, provinceCandidates: ['ACEH'], cityCandidates: ['BANDA ACEH'] },
+    { lat: 3.59, lon: 98.67, provinceCandidates: ['SUMATERA UTARA'], cityCandidates: ['MEDAN'] },
+    { lat: -0.95, lon: 100.35, provinceCandidates: ['SUMATERA BARAT'], cityCandidates: ['PADANG'] },
+    { lat: 0.53, lon: 101.45, provinceCandidates: ['RIAU'], cityCandidates: ['PEKANBARU'] },
+    { lat: 0.92, lon: 104.45, provinceCandidates: ['KEPULAUAN RIAU'], cityCandidates: ['TANJUNGPINANG'] },
+    { lat: -1.59, lon: 103.61, provinceCandidates: ['JAMBI'], cityCandidates: ['JAMBI'] },
+    { lat: -2.99, lon: 104.76, provinceCandidates: ['SUMATERA SELATAN'], cityCandidates: ['PALEMBANG'] },
+    { lat: -3.8, lon: 102.26, provinceCandidates: ['BENGKULU'], cityCandidates: ['BENGKULU'] },
+    { lat: -5.43, lon: 105.26, provinceCandidates: ['LAMPUNG'], cityCandidates: ['BANDAR LAMPUNG'] },
+    { lat: -2.13, lon: 106.11, provinceCandidates: ['KEPULAUAN BANGKA BELITUNG'], cityCandidates: ['PANGKALPINANG'] },
+    { lat: -6.2, lon: 106.85, provinceCandidates: ['DKI JAKARTA', 'JAKARTA'], cityCandidates: ['JAKARTA PUSAT', 'JAKARTA'] },
+    { lat: -6.18, lon: 106.63, provinceCandidates: ['BANTEN'], cityCandidates: ['TANGERANG'] },
+    { lat: -6.91, lon: 107.61, provinceCandidates: ['JAWA BARAT'], cityCandidates: ['BANDUNG'] },
+    { lat: -6.97, lon: 110.42, provinceCandidates: ['JAWA TENGAH'], cityCandidates: ['SEMARANG'] },
+    { lat: -7.8, lon: 110.36, provinceCandidates: ['DI YOGYAKARTA', 'YOGYAKARTA'], cityCandidates: ['YOGYAKARTA'] },
+    { lat: -7.26, lon: 112.75, provinceCandidates: ['JAWA TIMUR'], cityCandidates: ['SURABAYA'] },
+    { lat: -8.65, lon: 115.22, provinceCandidates: ['BALI'], cityCandidates: ['DENPASAR'] },
+    { lat: -8.58, lon: 116.11, provinceCandidates: ['NUSA TENGGARA BARAT'], cityCandidates: ['MATARAM'] },
+    { lat: -10.18, lon: 123.61, provinceCandidates: ['NUSA TENGGARA TIMUR'], cityCandidates: ['KUPANG'] },
+    { lat: -0.02, lon: 109.34, provinceCandidates: ['KALIMANTAN BARAT'], cityCandidates: ['PONTIANAK'] },
+    { lat: -2.21, lon: 113.92, provinceCandidates: ['KALIMANTAN TENGAH'], cityCandidates: ['PALANGKARAYA'] },
+    { lat: -3.32, lon: 114.59, provinceCandidates: ['KALIMANTAN SELATAN'], cityCandidates: ['BANJARMASIN'] },
+    { lat: -0.5, lon: 117.15, provinceCandidates: ['KALIMANTAN TIMUR'], cityCandidates: ['SAMARINDA'] },
+    { lat: 1.49, lon: 124.84, provinceCandidates: ['SULAWESI UTARA'], cityCandidates: ['MANADO'] },
+    { lat: 0.54, lon: 123.06, provinceCandidates: ['GORONTALO'], cityCandidates: ['GORONTALO'] },
+    { lat: -0.89, lon: 119.87, provinceCandidates: ['SULAWESI TENGAH'], cityCandidates: ['PALU'] },
+    { lat: -2.68, lon: 118.89, provinceCandidates: ['SULAWESI BARAT'], cityCandidates: ['MAMUJU'] },
+    { lat: -5.14, lon: 119.41, provinceCandidates: ['SULAWESI SELATAN'], cityCandidates: ['MAKASSAR'] },
+    { lat: -3.99, lon: 122.52, provinceCandidates: ['SULAWESI TENGGARA'], cityCandidates: ['KENDARI'] },
+    { lat: -3.69, lon: 128.18, provinceCandidates: ['MALUKU'], cityCandidates: ['AMBON'] },
+    { lat: 0.78, lon: 127.37, provinceCandidates: ['MALUKU UTARA'], cityCandidates: ['TERNATE'] },
+    { lat: -0.86, lon: 134.08, provinceCandidates: ['PAPUA BARAT'], cityCandidates: ['MANOKWARI'] },
+    { lat: -2.53, lon: 140.71, provinceCandidates: ['PAPUA'], cityCandidates: ['JAYAPURA'] },
+  ];
+
+  let activeTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Jakarta';
+  let latestScheduleRows = [];
+  let latestScheduleMeta = { provinsi: '', kabkota: '' };
+  let prayerTicker = null;
+  let prayerEntryTicker = null;
+  let screensaverClockTicker = null;
+  let hijriMode = 'masehi';
+  let lastGpsErrorCode = 0;
+  let lastGpsErrorMessage = '';
+  let audioContext = null;
+  let activeAlarmIntervals = [];
+  let activeAudioElement = null;
+
+  function ensureAudioContext() {
+    if (!window.AudioContext && !window.webkitAudioContext) {
+      return null;
+    }
+    if (!audioContext) {
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      audioContext = new AudioContextClass();
+    }
+    if (audioContext.state === 'suspended') {
+      audioContext.resume().catch(() => {});
+    }
+    return audioContext;
+  }
+
+  function unlockAudio() {
+    ensureAudioContext();
+    document.removeEventListener('click', unlockAudio);
+    document.removeEventListener('touchstart', unlockAudio);
+    document.removeEventListener('keydown', unlockAudio);
+  }
+
+  function stopAllAudio() {
+    activeAlarmIntervals.forEach((timer) => window.clearInterval(timer));
+    activeAlarmIntervals = [];
+    if (activeAudioElement) {
+      activeAudioElement.pause();
+      activeAudioElement.currentTime = 0;
+      activeAudioElement = null;
+    }
+  }
+
+  function playShortBeep(durationMs = 180, frequency = 880) {
+    const ctx = ensureAudioContext();
+    if (!ctx) {
+      return;
+    }
+    const oscillator = ctx.createOscillator();
+    const gainNode = ctx.createGain();
+    oscillator.type = 'square';
+    oscillator.frequency.value = frequency;
+    gainNode.gain.value = 0.06;
+    oscillator.connect(gainNode);
+    gainNode.connect(ctx.destination);
+    oscillator.start();
+    window.setTimeout(() => {
+      oscillator.stop();
+      oscillator.disconnect();
+      gainNode.disconnect();
+    }, durationMs);
+  }
+
+  function playAlarmForFiveSeconds() {
+    stopAllAudio();
+    const audio = new Audio(ALARM_AUDIO_PATH);
+    audio.preload = 'auto';
+    audio.loop = true;
+    activeAudioElement = audio;
+
+    audio
+      .play()
+      .then(() => {
+        const timer = window.setTimeout(() => {
+          stopAllAudio();
+        }, 5000);
+        activeAlarmIntervals.push(timer);
+      })
+      .catch(() => {
+        const startedAt = Date.now();
+        playShortBeep(180, 920);
+        const timer = window.setInterval(() => {
+          if (Date.now() - startedAt >= 5000) {
+            window.clearInterval(timer);
+            activeAlarmIntervals = activeAlarmIntervals.filter((item) => item !== timer);
+            return;
+          }
+          playShortBeep(180, 920);
+        }, 520);
+        activeAlarmIntervals.push(timer);
+      });
+  }
+
+  function speakAdzanNotice(prayerLabel, time) {
+    if (!window.speechSynthesis) {
+      return;
+    }
+    const utterance = new SpeechSynthesisUtterance(
+      `Telah masuk waktu sholat ${prayerLabel}, pukul ${time}.`
+    );
+    utterance.lang = 'id-ID';
+    utterance.rate = 0.95;
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(utterance);
+  }
+
+  async function playAdzanAudio(prayerLabel, time) {
+    stopAllAudio();
+    const audio = new Audio(ADZAN_AUDIO_PATH);
+    audio.preload = 'auto';
+    activeAudioElement = audio;
+
+    try {
+      await audio.play();
+    } catch (_) {
+      // Fallback jika file adzan belum ada atau autoplay diblok browser.
+      playAlarmForFiveSeconds();
+      speakAdzanNotice(prayerLabel, time);
+    }
+  }
+
+  function setLoading(isLoading) {
+    loadingEl.classList.toggle('hidden', !isLoading);
+    submitBtnEl.disabled = isLoading;
+  }
+
+  function setError(message = '') {
+    if (!message) {
+      errorEl.classList.add('hidden');
+      errorEl.textContent = '';
+      return;
+    }
+
+    errorEl.textContent = message;
+    errorEl.classList.remove('hidden');
+  }
+
+  async function fetchJson(url, options = {}) {
+    const response = await fetch(url, options);
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+
+    return response.json();
+  }
+
+  function setHijriLoading(isLoading) {
+    hijriLoadingEl.classList.toggle('hidden', !isLoading);
+  }
+
+  function setHijriError(message = '') {
+    if (!message) {
+      hijriErrorEl.classList.add('hidden');
+      hijriErrorEl.textContent = '';
+      return;
+    }
+
+    hijriErrorEl.textContent = message;
+    hijriErrorEl.classList.remove('hidden');
+  }
+
+  function daysInMonth(year, month) {
+    return new Date(year, month, 0).getDate();
+  }
+
+  function formatDateMasehi(date) {
+    return date.toLocaleDateString('id-ID', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    });
+  }
+
+  function formatIsoDate(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
+  function getMonthNameId(monthNumber) {
+    return new Date(2000, monthNumber - 1, 1).toLocaleDateString('id-ID', {
+      month: 'long',
+    });
+  }
+
+  function getCurrentHijriDateParts() {
+    const formatter = new Intl.DateTimeFormat('en-TN-u-ca-islamic', {
+      day: 'numeric',
+      month: 'numeric',
+      year: 'numeric',
+    });
+    const parts = formatter.formatToParts(new Date());
+    const findPart = (type) => Number(parts.find((part) => part.type === type)?.value ?? 1);
+    return {
+      month: findPart('month'),
+      year: findPart('year'),
+    };
+  }
+
+  function fillHijriMonthOptions() {
+    const options = HIJRI_MONTH_NAMES.map((name, index) => `<option value="${index + 1}">${name}</option>`).join('');
+    hijriMonthEl.innerHTML = options;
+  }
+
+  function setHijriMode(mode) {
+    hijriMode = mode === 'hijri' ? 'hijri' : 'masehi';
+    const isHijri = hijriMode === 'hijri';
+
+    hijriModeMasehiEl.classList.toggle('is-active', !isHijri);
+    hijriModeMasehiEl.classList.toggle('action-btn--secondary', isHijri);
+    hijriModeHijriEl.classList.toggle('is-active', isHijri);
+    hijriModeHijriEl.classList.toggle('action-btn--secondary', !isHijri);
+
+    hijriMasehiInputsEl.classList.toggle('hidden', isHijri);
+    hijriHijriInputsEl.classList.toggle('hidden', !isHijri);
+  }
+
+  function buildHijriFallbackFromGregorian(month, year) {
+    const totalDays = daysInMonth(year, month);
+    const rows = [];
+
+    for (let day = 1; day <= totalDays; day += 1) {
+      const dateObj = new Date(year, month - 1, day);
+      rows.push({
+        dateIso: formatIsoDate(dateObj),
+        masehi: formatDateMasehi(dateObj),
+        hari: dateObj.toLocaleDateString('id-ID', { weekday: 'long' }),
+        hijri: dateObj.toLocaleDateString('id-ID-u-ca-islamic', {
+          day: 'numeric',
+          month: 'long',
+          year: 'numeric',
+        }),
+      });
+    }
+
+    return rows;
+  }
+
+  function normalizeApiHijriRows(rows = []) {
+    return rows.map((item) => {
+      const rawDate = String(item?.gregorian?.date ?? '').trim();
+      const [day = '', month = '', year = ''] = rawDate.split('-');
+      const dateObj = day && month && year ? new Date(Number(year), Number(month) - 1, Number(day)) : null;
+      const masehi = dateObj ? formatDateMasehi(dateObj) : '-';
+
+      const hijriDay = item?.hijri?.day ?? '-';
+      const hijriMonth = item?.hijri?.month?.en ?? '';
+      const hijriYear = item?.hijri?.year ?? '';
+
+      return {
+        dateIso: dateObj ? formatIsoDate(dateObj) : '',
+        masehi,
+        hari: dateObj ? dateObj.toLocaleDateString('id-ID', { weekday: 'long' }) : '-',
+        hijri: `${hijriDay} ${hijriMonth} ${hijriYear} H`.trim(),
+      };
+    });
+  }
+
+  function renderHijriRows(rows = []) {
+    if (!rows.length) {
+      hijriBodyEl.innerHTML = emptyHijriRow;
+      return;
+    }
+
+    const sortedRows = [...rows].sort((a, b) => (a.dateIso || '').localeCompare(b.dateIso || ''));
+    const firstIso = sortedRows[0]?.dateIso || '';
+    const firstDate = firstIso ? new Date(`${firstIso}T00:00:00`) : null;
+    const firstWeekDayOffset = firstDate ? (firstDate.getDay() + 6) % 7 : 0;
+    const todayIso = getTodayIso();
+    const browserTodayIso = formatIsoDate(new Date());
+
+    const leadingCells = Array.from({ length: firstWeekDayOffset }, () => '<div class="hijri-calendar__cell is-empty"></div>');
+    const dayCells = sortedRows.map((item) => {
+      const dayNumber = item.dateIso ? Number(item.dateIso.split('-')[2]) : '';
+      const isToday = item.dateIso === todayIso || item.dateIso === browserTodayIso;
+      return `
+        <div class="hijri-calendar__cell${isToday ? ' is-today' : ''}">
+          <p class="hijri-calendar__day">${item.hari ?? '-'}</p>
+          <p class="hijri-calendar__masehi">${dayNumber || '-'} ${getMonthNameId(Number((item.dateIso || '').split('-')[1] || '1'))}</p>
+          <p class="hijri-calendar__hijri">${item.hijri ?? '-'}</p>
+        </div>
+      `;
+    });
+
+    hijriBodyEl.innerHTML = leadingCells.concat(dayCells).join('');
+  }
+
+  async function loadHijriCalendar() {
+    const month = Number.parseInt(bulanEl.value, 10);
+    const year = Number.parseInt(tahunEl.value, 10);
+    const hijriMonth = Number.parseInt(hijriMonthEl.value, 10);
+    const hijriYear = Number.parseInt(hijriYearEl.value, 10);
+
+    setHijriError('');
+    setHijriLoading(true);
+
+    try {
+      if (hijriMode === 'hijri') {
+        if (!Number.isInteger(hijriMonth) || hijriMonth < 1 || hijriMonth > 12) {
+          throw new Error('INVALID_HIJRI_MONTH');
+        }
+
+        if (!Number.isInteger(hijriYear) || hijriYear < 1) {
+          throw new Error('INVALID_HIJRI_YEAR');
+        }
+
+        const result = await fetchJson(`https://api.aladhan.com/v1/hToGCalendar/${hijriMonth}/${hijriYear}`);
+        const rows = normalizeApiHijriRows(result?.data || []);
+        if (!rows.length) {
+          throw new Error('EMPTY_HIJRI_DATA');
+        }
+
+        renderHijriRows(rows);
+        hijriMetaEl.textContent = `Kalender Hijriah murni untuk ${HIJRI_MONTH_NAMES[hijriMonth - 1]} ${hijriYear} H.`;
+        return;
+      }
+
+      if (!Number.isInteger(month) || month < 1 || month > 12 || !Number.isInteger(year) || year < 1900) {
+        throw new Error('INVALID_GREGORIAN');
+      }
+
+      const result = await fetchJson(`https://api.aladhan.com/v1/gToHCalendar/${month}/${year}`);
+      const rows = normalizeApiHijriRows(result?.data || []);
+      if (!rows.length) {
+        throw new Error('EMPTY_HIJRI_DATA');
+      }
+
+      renderHijriRows(rows);
+      hijriMetaEl.textContent = `Kalender Hijriah untuk bulan ${getMonthNameId(month)} ${year}.`;
+    } catch (error) {
+      if (hijriMode === 'hijri') {
+        renderHijriRows([]);
+        hijriMetaEl.textContent = 'Kalender Hijriah murni tidak tersedia saat ini.';
+        setHijriError('API kalender hijriah murni sedang bermasalah. Coba lagi beberapa saat.');
+      } else {
+        const fallbackRows = buildHijriFallbackFromGregorian(month, year);
+        renderHijriRows(fallbackRows);
+        hijriMetaEl.textContent = `Kalender Hijriah fallback untuk bulan ${getMonthNameId(month)} ${year}.`;
+        setHijriError('API kalender hijriah sedang bermasalah, menampilkan fallback browser.');
+      }
+    } finally {
+      setHijriLoading(false);
+    }
+  }
+
+  function renderScheduleRows(jadwal = []) {
+    if (!jadwal.length) {
+      scheduleBodyEl.innerHTML = emptyRow;
+      return;
+    }
+
+    const todayIsoLocal = getTodayIso();
+    scheduleBodyEl.innerHTML = jadwal
+      .map((item) => {
+        const tanggal = item.tanggal_lengkap || item.tanggal || '-';
+        const itemDateIso = getItemDateIso(item);
+        const isToday = itemDateIso === todayIsoLocal;
+        const rowStyle = isToday ? ' style="background:#fff2a8;"' : '';
+        const todayRowAttr = isToday ? ' data-today="true"' : '';
+        const keyCellStyle = isToday
+          ? ' style="background:#f4d35e;font-weight:700;font-family:\'Poppins\',sans-serif;"'
+          : '';
+        return `
+          <tr${todayRowAttr}${rowStyle}>
+            <td${keyCellStyle}>
+              ${tanggal}
+            </td>
+            <td${keyCellStyle}>${item.hari ?? '-'}</td>
+            <td>${item.imsak ?? '-'}</td>
+            <td>${item.subuh ?? '-'}</td>
+            <td>${item.terbit ?? '-'}</td>
+            <td>${item.dhuha ?? '-'}</td>
+            <td>${item.dzuhur ?? '-'}</td>
+            <td>${item.ashar ?? '-'}</td>
+            <td>${item.maghrib ?? '-'}</td>
+            <td>${item.isya ?? '-'}</td>
+          </tr>
+        `;
+      })
+      .join('');
+  }
+
+  function getTodayIso() {
+    const now = getZonedNow(activeTimezone);
+    const year = now.year;
+    const month = String(now.month).padStart(2, '0');
+    const day = String(now.day).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
+  function getZonedNow(timeZone) {
+    const formatter = new Intl.DateTimeFormat('en-CA', {
+      timeZone,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false,
+    });
+    const parts = formatter.formatToParts(new Date());
+    const getPart = (type) => parts.find((part) => part.type === type)?.value ?? '00';
+    return {
+      year: Number(getPart('year')),
+      month: Number(getPart('month')),
+      day: Number(getPart('day')),
+      hour: Number(getPart('hour')),
+      minute: Number(getPart('minute')),
+      second: Number(getPart('second')),
+    };
+  }
+
+  function getTimezoneLabel(timeZone) {
+    if (timeZone === 'Asia/Jayapura') {
+      return 'WIT';
+    }
+    if (timeZone === 'Asia/Makassar') {
+      return 'WITA';
+    }
+    return 'WIB';
+  }
+
+  function inferTimezoneFromProvince(provinsi = '') {
+    const normalized = normalizeText(provinsi);
+    if (PROVINCES_WIT.some((item) => normalized.includes(item))) {
+      return 'Asia/Jayapura';
+    }
+    if (PROVINCES_WITA.some((item) => normalized.includes(item))) {
+      return 'Asia/Makassar';
+    }
+    return 'Asia/Jakarta';
+  }
+
+  function inferTimezoneFromCoords(latitude, longitude) {
+    if (latitude >= -11 && latitude <= 7 && longitude >= 95 && longitude <= 141) {
+      if (longitude < 117) {
+        return 'Asia/Jakarta';
+      }
+      if (longitude < 129) {
+        return 'Asia/Makassar';
+      }
+      return 'Asia/Jayapura';
+    }
+
+    return Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Jakarta';
+  }
+
+  function getDistanceKm(lat1, lon1, lat2, lon2) {
+    const R = 6371;
+    const dLat = ((lat2 - lat1) * Math.PI) / 180;
+    const dLon = ((lon2 - lon1) * Math.PI) / 180;
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos((lat1 * Math.PI) / 180) *
+        Math.cos((lat2 * Math.PI) / 180) *
+        Math.sin(dLon / 2) *
+        Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+  }
+
+  function getNearestGpsHint(latitude, longitude) {
+    let nearest = GPS_LOCATION_HINTS[0];
+    let nearestDistance = Number.POSITIVE_INFINITY;
+
+    for (const hint of GPS_LOCATION_HINTS) {
+      const distance = getDistanceKm(latitude, longitude, hint.lat, hint.lon);
+      if (distance < nearestDistance) {
+        nearestDistance = distance;
+        nearest = hint;
+      }
+    }
+
+    return nearest;
+  }
+
+  function parseTimeToMinute(value = '') {
+    const matched = String(value).trim().match(/^(\d{1,2}):(\d{2})$/);
+    if (!matched) {
+      return -1;
+    }
+    const hour = Number(matched[1]);
+    const minute = Number(matched[2]);
+    return hour * 60 + minute;
+  }
+
+  function getNextPrayerInfo(rows = []) {
+    if (!rows.length) {
+      return null;
+    }
+
+    const now = getZonedNow(activeTimezone);
+    const todayIso = getTodayIso();
+    const nowMinute = now.hour * 60 + now.minute;
+    const todayRow = rows.find((item) => getItemDateIso(item) === todayIso);
+
+    if (todayRow) {
+      for (const prayer of PRAYER_ORDER) {
+        const prayerMinute = parseTimeToMinute(todayRow?.[prayer.key]);
+        if (prayerMinute > nowMinute) {
+          return {
+            ...prayer,
+            minute: prayerMinute,
+            time: todayRow?.[prayer.key],
+            dateIso: todayIso,
+            dateLabel: todayRow?.tanggal_lengkap || todayRow?.tanggal || todayIso,
+          };
+        }
+      }
+    }
+
+    const nextRow = rows.find((item) => {
+      const dateIso = getItemDateIso(item);
+      return dateIso && dateIso > todayIso;
+    });
+
+    if (!nextRow) {
+      return null;
+    }
+
+    for (const prayer of PRAYER_ORDER) {
+      const prayerMinute = parseTimeToMinute(nextRow?.[prayer.key]);
+      if (prayerMinute >= 0) {
+        return {
+          ...prayer,
+          minute: prayerMinute,
+          time: nextRow?.[prayer.key],
+          dateIso: getItemDateIso(nextRow),
+          dateLabel: nextRow?.tanggal_lengkap || nextRow?.tanggal || getItemDateIso(nextRow),
+        };
+      }
+    }
+
+    return null;
+  }
+
+  function getTodayScheduleRow(rows = []) {
+    const todayIso = getTodayIso();
+    return rows.find((item) => getItemDateIso(item) === todayIso) || null;
+  }
+
+  function formatClockByTimezone(timezone) {
+    const now = new Date();
+    return now.toLocaleTimeString('id-ID', {
+      timeZone: timezone,
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false,
+    });
+  }
+
+  function formatHijriDateFromIso(isoDate) {
+    const matched = String(isoDate || '').match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (!matched) {
+      return '-';
+    }
+
+    const year = Number(matched[1]);
+    const month = Number(matched[2]);
+    const day = Number(matched[3]);
+    const date = new Date(year, month - 1, day);
+
+    return date.toLocaleDateString('id-ID-u-ca-islamic', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    });
+  }
+
+  function refreshScreensaverClock() {
+    if (!screensaverClockEl) {
+      return;
+    }
+    screensaverClockEl.textContent = formatClockByTimezone(activeTimezone);
+  }
+
+  function renderScreensaver() {
+    if (!screensaverPanelEl || screensaverPanelEl.classList.contains('hidden')) {
+      return;
+    }
+
+    const todayRow = getTodayScheduleRow(latestScheduleRows);
+    const tzLabel = getTimezoneLabel(activeTimezone);
+    const lokasi = latestScheduleMeta.kabkota
+      ? `${latestScheduleMeta.kabkota}, ${latestScheduleMeta.provinsi} (${tzLabel})`
+      : `Belum ada lokasi (${tzLabel})`;
+
+    screensaverLocationEl.textContent = lokasi;
+    const activeDateIso = getItemDateIso(todayRow) || getTodayIso();
+    screensaverDateEl.textContent = todayRow?.tanggal_lengkap || activeDateIso;
+    screensaverHijriDateEl.textContent = formatHijriDateFromIso(activeDateIso);
+
+    if (!todayRow) {
+      screensaverNextEl.textContent = 'Data hari ini belum tersedia. Klik Cek Jadwal Hari Ini terlebih dahulu.';
+      screensaverTimesRowEl.innerHTML = '<td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td>';
+      return;
+    }
+
+    screensaverTimesRowEl.innerHTML = `
+      <td style="color:#000 !important;background:#fff !important;font-weight:700 !important;">${todayRow.imsak ?? '-'}</td>
+      <td style="color:#000 !important;background:#fff !important;font-weight:700 !important;">${todayRow.subuh ?? '-'}</td>
+      <td style="color:#000 !important;background:#fff !important;font-weight:700 !important;">${todayRow.dzuhur ?? '-'}</td>
+      <td style="color:#000 !important;background:#fff !important;font-weight:700 !important;">${todayRow.ashar ?? '-'}</td>
+      <td style="color:#000 !important;background:#fff !important;font-weight:700 !important;">${todayRow.maghrib ?? '-'}</td>
+      <td style="color:#000 !important;background:#fff !important;font-weight:700 !important;">${todayRow.isya ?? '-'}</td>
+    `;
+
+    const nextPrayer = getNextPrayerInfo(latestScheduleRows);
+    if (nextPrayer) {
+      screensaverNextEl.textContent = `Sholat berikutnya: ${nextPrayer.label} pukul ${nextPrayer.time}.`;
+    } else {
+      screensaverNextEl.textContent = 'Semua jadwal hari ini sudah lewat. Menunggu jadwal berikutnya.';
+    }
+  }
+
+  function isFullscreenActive() {
+    return Boolean(document.fullscreenElement || document.webkitFullscreenElement);
+  }
+
+  function updateFullscreenButtons() {
+    const active = isFullscreenActive();
+    const label = active ? 'Keluar Fullscreen' : 'Masuk Fullscreen';
+    if (ctaFullscreenEl) {
+      ctaFullscreenEl.textContent = label;
+    }
+    if (screensaverToggleFullscreenEl) {
+      screensaverToggleFullscreenEl.textContent = label;
+    }
+  }
+
+  async function enterFullscreen() {
+    try {
+      if (isFullscreenActive()) {
+        return true;
+      }
+
+      const target = document.documentElement;
+      if (target.requestFullscreen) {
+        await target.requestFullscreen();
+        return true;
+      }
+
+      if (target.webkitRequestFullscreen) {
+        target.webkitRequestFullscreen();
+        return true;
+      }
+    } catch (error) {
+      return false;
+    }
+
+    return false;
+  }
+
+  async function exitFullscreen() {
+    try {
+      if (!isFullscreenActive()) {
+        return;
+      }
+
+      if (document.exitFullscreen) {
+        await document.exitFullscreen();
+        return;
+      }
+
+      if (document.webkitExitFullscreen) {
+        document.webkitExitFullscreen();
+      }
+    } catch (error) {}
+  }
+
+  async function toggleFullscreen() {
+    if (isFullscreenActive()) {
+      await exitFullscreen();
+    } else {
+      await enterFullscreen();
+    }
+    updateFullscreenButtons();
+  }
+
+  async function openScreensaver() {
+    screensaverPanelEl.classList.remove('hidden');
+    screensaverPanelEl.setAttribute('aria-hidden', 'false');
+    renderScreensaver();
+    refreshScreensaverClock();
+    if (screensaverClockTicker) {
+      window.clearInterval(screensaverClockTicker);
+    }
+    screensaverClockTicker = window.setInterval(refreshScreensaverClock, 1000);
+  }
+
+  async function closeScreensaver() {
+    screensaverPanelEl.classList.add('hidden');
+    screensaverPanelEl.setAttribute('aria-hidden', 'true');
+    if (screensaverClockTicker) {
+      window.clearInterval(screensaverClockTicker);
+      screensaverClockTicker = null;
+    }
+  }
+
+  function showPrayerAlert(text) {
+    prayerAlertTitleEl.textContent = 'Pengingat Sholat Berikutnya';
+    prayerAlertTextEl.textContent = text;
+    prayerAlertEl.classList.remove('hidden');
+  }
+
+  function hidePrayerAlert() {
+    prayerAlertEl.classList.add('hidden');
+    stopAllAudio();
+  }
+
+  function checkPrayerNotification(force = false) {
+    if (!latestScheduleRows.length) {
+      return;
+    }
+
+    const nextPrayer = getNextPrayerInfo(latestScheduleRows);
+    if (!nextPrayer) {
+      return;
+    }
+
+    const locationKey = `${latestScheduleMeta.provinsi}|${latestScheduleMeta.kabkota}|${activeTimezone}`;
+    const prayerKey = `${nextPrayer.dateIso}|${locationKey}|${nextPrayer.key}|${nextPrayer.time}`;
+    const storageKey = 'last-next-prayer-alert-key';
+    const existingKey = sessionStorage.getItem(storageKey);
+
+    if (!force && existingKey === prayerKey) {
+      return;
+    }
+
+    const tzLabel = getTimezoneLabel(activeTimezone);
+    showPrayerAlert(
+      `Waktu sholat berikutnya ${nextPrayer.label} di ${latestScheduleMeta.kabkota}, ${latestScheduleMeta.provinsi} (${tzLabel}) pukul ${nextPrayer.time}.`
+    );
+    sessionStorage.setItem(storageKey, prayerKey);
+  }
+
+  function getCurrentTimeHHMM() {
+    const now = getZonedNow(activeTimezone);
+    const hour = String(now.hour).padStart(2, '0');
+    const minute = String(now.minute).padStart(2, '0');
+    return `${hour}:${minute}`;
+  }
+
+  function checkPrayerEntryNotification(force = false) {
+    if (!latestScheduleRows.length) {
+      return false;
+    }
+
+    const todayRow = getTodayScheduleRow(latestScheduleRows);
+    if (!todayRow) {
+      return false;
+    }
+
+    const nowHHMM = getCurrentTimeHHMM();
+    const todayIso = getItemDateIso(todayRow) || getTodayIso();
+    const locationKey = `${latestScheduleMeta.provinsi}|${latestScheduleMeta.kabkota}|${activeTimezone}`;
+    const storageKey = 'last-prayer-entry-alert-key';
+
+    for (const event of PRAYER_ENTRY_EVENTS) {
+      const eventTime = String(todayRow?.[event.key] || '').trim();
+      if (!eventTime || eventTime !== nowHHMM) {
+        continue;
+      }
+
+      const prayerKey = `${todayIso}|${locationKey}|${event.key}|${eventTime}`;
+      const existingKey = sessionStorage.getItem(storageKey);
+      if (!force && existingKey === prayerKey) {
+        return false;
+      }
+
+      const tzLabel = getTimezoneLabel(activeTimezone);
+      showPrayerAlert(
+        `Waktu ${event.label} telah masuk di ${latestScheduleMeta.kabkota}, ${latestScheduleMeta.provinsi} (${tzLabel}) pukul ${eventTime}.`
+      );
+
+      if (event.type === 'adzan') {
+        void playAdzanAudio(event.label, eventTime);
+      } else {
+        playAlarmForFiveSeconds();
+      }
+
+      sessionStorage.setItem(storageKey, prayerKey);
+      return true;
+    }
+
+    return false;
+  }
+
+  function restartPrayerTicker() {
+    if (prayerTicker) {
+      window.clearInterval(prayerTicker);
+    }
+    if (prayerEntryTicker) {
+      window.clearInterval(prayerEntryTicker);
+    }
+    checkPrayerEntryNotification(true);
+    checkPrayerNotification(true);
+    prayerTicker = window.setInterval(() => checkPrayerNotification(false), 30000);
+    prayerEntryTicker = window.setInterval(() => checkPrayerEntryNotification(false), 10000);
+  }
+
+  function getItemDateIso(item = {}) {
+    const direct = String(item.tanggal ?? '').trim();
+    if (/^\d{4}-\d{2}-\d{2}$/.test(direct)) {
+      return direct;
+    }
+
+    const fullDate = String(item.tanggal_lengkap ?? '').trim();
+    const matched = fullDate.match(/\d{4}-\d{2}-\d{2}/);
+    return matched ? matched[0] : '';
+  }
+
+  function fillSelect(selectElement, list, placeholder) {
+    const options = [`<option value="">${placeholder}</option>`]
+      .concat(list.map((item) => `<option value="${item}">${item}</option>`))
+      .join('');
+
+    selectElement.innerHTML = options;
+  }
+
+  function normalizeText(value = '') {
+    return value
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^\p{L}\p{N}\s]/gu, ' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .toUpperCase();
+  }
+
+  function simplifyRegionName(value = '') {
+    return normalizeText(value)
+      .replace(/\bPROVINSI\b/g, ' ')
+      .replace(/\bDAERAH KHUSUS IBUKOTA\b/g, ' ')
+      .replace(/\bKABUPATEN\b/g, ' ')
+      .replace(/\bKOTA\b/g, ' ')
+      .replace(/\bADM\b/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  function getSelectValues(selectElement) {
+    return Array.from(selectElement.options)
+      .map((option) => option.value)
+      .filter(Boolean);
+  }
+
+  function findBestMatch(values, candidates) {
+    const cleanCandidates = candidates.map((candidate) => candidate?.trim()).filter(Boolean);
+    if (!cleanCandidates.length || !values.length) {
+      return '';
+    }
+
+    const rows = values.map((value) => ({
+      raw: value,
+      normalized: normalizeText(value),
+      simplified: simplifyRegionName(value),
+    }));
+    const candidateRows = cleanCandidates.map((candidate) => ({
+      raw: candidate,
+      normalized: normalizeText(candidate),
+      simplified: simplifyRegionName(candidate),
+    }));
+
+    const exact = candidateRows
+      .map((candidate) => rows.find((row) => row.normalized === candidate.normalized))
+      .find(Boolean);
+    if (exact) {
+      return exact.raw;
+    }
+
+    const inclusive = candidateRows
+      .map((candidate) =>
+        rows.find(
+          (row) =>
+            row.normalized.includes(candidate.normalized) ||
+            candidate.normalized.includes(row.normalized)
+        )
+      )
+      .find(Boolean);
+    if (inclusive) {
+      return inclusive.raw;
+    }
+
+    const simplified = candidateRows
+      .map((candidate) =>
+        rows.find(
+          (row) =>
+            row.simplified === candidate.simplified ||
+            row.simplified.includes(candidate.simplified) ||
+            candidate.simplified.includes(row.simplified)
+        )
+      )
+      .find(Boolean);
+
+    return simplified?.raw ?? '';
+  }
+
+  function setSelectByCandidates(selectElement, candidates) {
+    const values = getSelectValues(selectElement);
+    const matchedValue = findBestMatch(values, candidates);
+    if (!matchedValue) {
+      return '';
+    }
+
+    selectElement.value = matchedValue;
+    return matchedValue;
+  }
+
+  async function loadProvinsi() {
+    try {
+      setError('');
+      setLoading(true);
+
+      const result = await fetchJson(`${API_BASE}/provinsi`);
+      const list = result.data || [];
+      fillSelect(provinsiEl, list, 'Cari provinsi...');
+      return list;
+    } catch (error) {
+      setError('Gagal memuat daftar provinsi. Coba refresh halaman.');
+      return [];
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function loadKabkota(provinsi) {
+    if (!provinsi) {
+      kabkotaEl.disabled = true;
+      fillSelect(kabkotaEl, [], 'Pilih kabupaten/kota...');
+      return;
+    }
+
+    try {
+      setError('');
+      setLoading(true);
+      kabkotaEl.disabled = true;
+
+      const result = await fetchJson(`${API_BASE}/kabkota`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ provinsi }),
+      });
+
+      fillSelect(kabkotaEl, result.data || [], 'Pilih kabupaten/kota...');
+      kabkotaEl.disabled = false;
+      return result.data || [];
+    } catch (error) {
+      setError('Gagal memuat daftar kabupaten/kota.');
+      fillSelect(kabkotaEl, [], 'Pilih kabupaten/kota...');
+      kabkotaEl.disabled = true;
+      return [];
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function loadSchedule(source = '') {
+    const provinsi = provinsiEl.value;
+    const kabkota = kabkotaEl.value;
+    const bulan = Number.parseInt(bulanEl.value, 10);
+    const tahun = Number.parseInt(tahunEl.value, 10);
+
+    if (!provinsi || !kabkota) {
+      setError('Provinsi dan kabupaten/kota wajib dipilih.');
+      return;
+    }
+
+    if (!Number.isInteger(bulan) || bulan < 1 || bulan > 12) {
+      setError('Bulan harus antara 1 sampai 12.');
+      return;
+    }
+
+    if (!Number.isInteger(tahun) || tahun < 2026) {
+      setError('Tahun tidak valid.');
+      return;
+    }
+
+    if (source !== 'GPS') {
+      activeTimezone = inferTimezoneFromProvince(provinsi);
+    }
+
+    try {
+      setError('');
+      setLoading(true);
+
+      const result = await fetchJson(`${API_BASE}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          provinsi,
+          kabkota,
+          bulan,
+          tahun,
+        }),
+      });
+
+      const payload = result.data || {};
+      renderScheduleRows(payload.jadwal || []);
+      latestScheduleRows = payload.jadwal || [];
+      latestScheduleMeta = {
+        provinsi: payload.provinsi ?? provinsi,
+        kabkota: payload.kabkota ?? kabkota,
+      };
+      restartPrayerTicker();
+      renderScreensaver();
+      await loadHijriCalendar();
+
+      const locationSource = source ? ` (${source})` : '';
+      resultMetaEl.textContent = `Jadwal ${payload.bulan_nama ?? bulan} ${payload.tahun ?? tahun} untuk ${payload.kabkota ?? kabkota}, ${payload.provinsi ?? provinsi}${locationSource}`;
+      return true;
+    } catch (error) {
+      renderScheduleRows([]);
+      latestScheduleRows = [];
+      resultMetaEl.textContent = 'Pilih lokasi, lalu klik tombol Tampilkan.';
+      setError('Gagal memuat jadwal sholat. Pastikan nama wilayah valid dari daftar API.');
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function getCurrentPosition() {
+    if (!navigator.geolocation) {
+      throw new Error('GEOLOCATION_UNAVAILABLE');
+    }
+
+    return new Promise((resolve, reject) => {
+      navigator.geolocation.getCurrentPosition(resolve, reject, {
+        enableHighAccuracy: true,
+        timeout: 8000,
+        maximumAge: 300000,
+      });
+    });
+  }
+
+  async function reverseGeocode(latitude, longitude) {
+    const openMeteoEndpoint = `https://geocoding-api.open-meteo.com/v1/reverse?latitude=${latitude}&longitude=${longitude}&language=id&count=1`;
+    const bigDataCloudEndpoints = [
+      `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=id`,
+      `https://api-bdc.io/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=id`,
+    ];
+
+    try {
+      const openMeteoResult = await fetchJson(openMeteoEndpoint);
+      const first = openMeteoResult?.results?.[0];
+      if (first) {
+        return {
+          address: {
+            state: first.admin1 || '',
+            county: first.admin2 || '',
+            city: first.name || '',
+            locality: first.name || '',
+          },
+        };
+      }
+    } catch (_) {}
+
+    for (const endpoint of bigDataCloudEndpoints) {
+      try {
+        const result = await fetchJson(endpoint);
+        return {
+          address: {
+            state: result?.principalSubdivision || '',
+            principalSubdivision: result?.principalSubdivision || '',
+            county: result?.city || result?.locality || '',
+            city: result?.city || result?.locality || '',
+            locality: result?.locality || result?.city || '',
+          },
+        };
+      } catch (_) {}
+    }
+
+    throw new Error('REVERSE_GEOCODE_FAILED');
+  }
+
+  async function getApproxCoordsFromIp() {
+    const ipData = await fetchJson('https://ipapi.co/json/');
+    const latitude = Number(ipData?.latitude);
+    const longitude = Number(ipData?.longitude);
+
+    if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+      throw new Error('IP_GEOLOCATION_UNAVAILABLE');
+    }
+
+    return { latitude, longitude };
+  }
+
+  function extractLocationCandidates(address = {}) {
+    const normalizedAddress = address?.address ? address.address : address;
+    const provinceCandidates = [
+      normalizedAddress.state,
+      normalizedAddress.region,
+      normalizedAddress.state_district,
+      normalizedAddress.province,
+      normalizedAddress.principalSubdivision,
+      normalizedAddress.principalSubdivisionCode,
+    ].filter(Boolean);
+
+    const cityCandidates = [
+      normalizedAddress.city,
+      normalizedAddress.town,
+      normalizedAddress.county,
+      normalizedAddress.municipality,
+      normalizedAddress.city_district,
+      normalizedAddress.suburb,
+      normalizedAddress.village,
+      normalizedAddress.locality,
+      normalizedAddress.localityInfo?.administrative?.[2]?.name,
+      normalizedAddress.localityInfo?.administrative?.[3]?.name,
+    ].filter(Boolean);
+
+    return { provinceCandidates, cityCandidates };
+  }
+
+  async function selectLocationAndLoad(provinceCandidates, cityCandidates, source) {
+    const selectedProvinsi = setSelectByCandidates(provinsiEl, provinceCandidates);
+    if (!selectedProvinsi) {
+      return false;
+    }
+
+    await loadKabkota(selectedProvinsi);
+    const selectedKabkota = setSelectByCandidates(kabkotaEl, cityCandidates);
+    if (!selectedKabkota) {
+      return false;
+    }
+
+    return loadSchedule(source);
+  }
+
+  async function loadJakartaAsDefault() {
+    const selectedProvinsi = setSelectByCandidates(provinsiEl, DEFAULT_PROVINSI_CANDIDATES);
+    if (!selectedProvinsi) {
+      return false;
+    }
+
+    await loadKabkota(selectedProvinsi);
+
+    const selectedKabkota =
+      setSelectByCandidates(kabkotaEl, DEFAULT_KABKOTA_CANDIDATES) ||
+      setSelectByCandidates(kabkotaEl, ['JAKARTA']) ||
+      getSelectValues(kabkotaEl)[0] ||
+      '';
+
+    if (!selectedKabkota) {
+      return false;
+    }
+
+    kabkotaEl.value = selectedKabkota;
+    activeTimezone = 'Asia/Jakarta';
+    return loadSchedule('default Jakarta');
+  }
+
+  async function tryLoadByGps() {
+    try {
+      lastGpsErrorCode = 0;
+      lastGpsErrorMessage = '';
+      resultMetaEl.textContent = 'Mencari lokasi GPS...';
+      const position = await getCurrentPosition();
+      const latitude = position.coords.latitude;
+      const longitude = position.coords.longitude;
+      activeTimezone = inferTimezoneFromCoords(latitude, longitude);
+      const nearestHint = getNearestGpsHint(latitude, longitude);
+      return selectLocationAndLoad(
+        nearestHint.provinceCandidates,
+        nearestHint.cityCandidates,
+        'GPS'
+      );
+    } catch (error) {
+      lastGpsErrorCode = Number(error?.code || 0);
+      lastGpsErrorMessage = String(error?.message || '');
+      try {
+        const approx = await getApproxCoordsFromIp();
+        activeTimezone = inferTimezoneFromCoords(approx.latitude, approx.longitude);
+        const nearestHint = getNearestGpsHint(approx.latitude, approx.longitude);
+        return selectLocationAndLoad(
+          nearestHint.provinceCandidates,
+          nearestHint.cityCandidates,
+          'IP fallback'
+        );
+      } catch (_) {
+        return false;
+      }
+    }
+  }
+
+  async function requestGpsAndReload(options = {}) {
+    const { silent = false } = options;
+    const loadedFromGps = await tryLoadByGps();
+    if (loadedFromGps) {
+      setError('');
+      return true;
+    }
+
+    if (!silent) {
+      const isSecureContextLike =
+        window.location.protocol === 'https:' ||
+        window.location.hostname === 'localhost' ||
+        window.location.hostname === '127.0.0.1';
+
+      if (!isSecureContextLike) {
+        setError('GPS hanya bisa dipakai di HTTPS. Buka website melalui domain HTTPS, lalu coba lagi.');
+      } else if (lastGpsErrorCode === 1) {
+        setError('Izin GPS ditolak. Aktifkan izin lokasi di browser (ikon gembok > Site settings > Location: Allow), lalu klik Gunakan GPS Sekarang.');
+      } else if (lastGpsErrorCode === 3) {
+        setError('Permintaan GPS timeout. Coba lagi di area dengan sinyal lokasi lebih stabil.');
+      } else if (lastGpsErrorCode === 2) {
+        setError('Lokasi GPS tidak tersedia di perangkat ini. Jadwal ditampilkan dari perkiraan lokasi jaringan (IP).');
+      } else if (lastGpsErrorMessage === 'IP_GEOLOCATION_UNAVAILABLE') {
+        setError('GPS dan lokasi jaringan tidak tersedia. Jadwal tetap menggunakan default Jakarta.');
+      } else {
+        setError('GPS belum bisa dipakai saat ini. Jadwal tetap bisa digunakan dengan lokasi default Jakarta.');
+      }
+    }
+    return false;
+  }
+
+  function setupGeolocationAutoRefresh() {
+    if (!('permissions' in navigator) || !navigator.permissions?.query) {
+      return;
+    }
+
+    navigator.permissions
+      .query({ name: 'geolocation' })
+      .then((status) => {
+        if (status.state === 'granted') {
+          requestGpsAndReload({ silent: true });
+        }
+
+        status.onchange = () => {
+          if (status.state === 'granted') {
+            requestGpsAndReload({ silent: true });
+          }
+        };
+      })
+      .catch(() => {});
+  }
+
+  document.addEventListener('astro:page-load', () => {
+    renderScheduleRows([]);
+    document.addEventListener('click', unlockAudio);
+    document.addEventListener('touchstart', unlockAudio, { passive: true });
+    document.addEventListener('keydown', unlockAudio);
+    let initialized = false;
+    const setCurrentMonthYear = () => {
+      const now = new Date();
+      bulanEl.value = String(now.getMonth() + 1);
+      tahunEl.value = String(now.getFullYear());
+    };
+
+    const scrollToTodayRow = () => {
+      const todayRow = scheduleBodyEl.querySelector('tr[data-today="true"]');
+      todayRow?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    };
+
+    provinsiEl.addEventListener('change', (event) => {
+      const value = event.target.value;
+      loadKabkota(value);
+      renderScheduleRows([]);
+      latestScheduleRows = [];
+      hidePrayerAlert();
+      resultMetaEl.textContent = 'Pilih lokasi, lalu klik tombol Tampilkan.';
+      renderScreensaver();
+    });
+
+    bulanEl.addEventListener('change', () => {
+      if (hijriMode === 'masehi') {
+        loadHijriCalendar();
+      }
+    });
+
+    tahunEl.addEventListener('change', () => {
+      if (hijriMode === 'masehi') {
+        loadHijriCalendar();
+      }
+    });
+
+    hijriModeMasehiEl?.addEventListener('click', () => {
+      setHijriMode('masehi');
+      loadHijriCalendar();
+    });
+
+    hijriModeHijriEl?.addEventListener('click', () => {
+      setHijriMode('hijri');
+      loadHijriCalendar();
+    });
+
+    hijriMonthEl?.addEventListener('change', () => {
+      if (hijriMode === 'hijri') {
+        loadHijriCalendar();
+      }
+    });
+
+    hijriYearEl?.addEventListener('change', () => {
+      if (hijriMode === 'hijri') {
+        loadHijriCalendar();
+      }
+    });
+
+    formEl.addEventListener('submit', (event) => {
+      event.preventDefault();
+      loadSchedule();
+    });
+
+    resetBtnEl?.addEventListener('click', () => {
+      setError('');
+      setLoading(false);
+      renderScheduleRows([]);
+      latestScheduleRows = [];
+      hidePrayerAlert();
+      resultMetaEl.textContent = 'Pilih lokasi, lalu klik tombol Tampilkan.';
+      kabkotaEl.disabled = true;
+      fillSelect(kabkotaEl, [], 'Pilih kabupaten/kota...');
+      renderScreensaver();
+    });
+
+    ctaChooseLocationEl?.addEventListener('click', () => {
+      formEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      provinsiEl.focus();
+    });
+
+    ctaTodayEl?.addEventListener('click', async () => {
+      setCurrentMonthYear();
+      if (!provinsiEl.value || !kabkotaEl.value) {
+        formEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        provinsiEl.focus();
+        return;
+      }
+      const loaded = await loadSchedule();
+      if (loaded) {
+        scrollToTodayRow();
+      }
+    });
+
+    ctaJadwalEl?.addEventListener('click', () => {
+      hasilJadwalEl?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+
+    ctaScreensaverEl?.addEventListener('click', async () => {
+      setCurrentMonthYear();
+      let loaded = latestScheduleRows.length > 0;
+
+      if (!loaded) {
+        if (!provinsiEl.value || !kabkotaEl.value) {
+          formEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          provinsiEl.focus();
+          return;
+        }
+        loaded = await loadSchedule();
+      }
+
+      if (!loaded) {
+        return;
+      }
+
+      await openScreensaver();
+    });
+
+    ctaFullscreenEl?.addEventListener('click', async () => {
+      await toggleFullscreen();
+    });
+
+    ctaGpsEl?.addEventListener('click', async () => {
+      await requestGpsAndReload();
+    });
+
+    prayerAlertCloseEl?.addEventListener('click', hidePrayerAlert);
+    screensaverCloseEl?.addEventListener('click', async () => {
+      await closeScreensaver();
+    });
+    screensaverToggleFullscreenEl?.addEventListener('click', async () => {
+      await toggleFullscreen();
+    });
+    window.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && !screensaverPanelEl.classList.contains('hidden')) {
+        void closeScreensaver();
+      }
+    });
+
+    document.addEventListener('fullscreenchange', updateFullscreenButtons);
+    document.addEventListener('webkitfullscreenchange', updateFullscreenButtons);
+    updateFullscreenButtons();
+    setupGeolocationAutoRefresh();
+
+    if (!initialized) {
+      initialized = true;
+      (async () => {
+        fillHijriMonthOptions();
+        const currentHijri = getCurrentHijriDateParts();
+        hijriMonthEl.value = String(currentHijri.month);
+        hijriYearEl.value = String(currentHijri.year);
+        setHijriMode('masehi');
+        await loadHijriCalendar();
+
+        const listProvinsi = await loadProvinsi();
+        if (!listProvinsi.length) {
+          return;
+        }
+
+        const loadedFromGps = await tryLoadByGps();
+        if (!loadedFromGps) {
+          await loadJakartaAsDefault();
+        }
+      })();
+    }
+  });
+</script>
+
+
+
+

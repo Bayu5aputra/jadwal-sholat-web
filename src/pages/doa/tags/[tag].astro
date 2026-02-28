@@ -1,0 +1,67 @@
+---
+import Layout from '@layouts/Default.astro';
+import { Button } from '@eliancodes/brutal-ui';
+import { getDoaList, getDoaSlug, getDoaTags, type DoaItem } from '../../../lib/doa';
+
+export async function getStaticPaths() {
+  const doaList = await getDoaList();
+  const tags = getDoaTags(doaList);
+
+  return tags.map((tag) => ({
+    params: { tag },
+    props: {
+      tag,
+      doaItems: doaList.filter((item) => item.tags.map((t) => t.toLowerCase()).includes(tag)),
+    },
+  }));
+}
+
+interface Props {
+  tag: string;
+  doaItems: DoaItem[];
+}
+
+const { tag, doaItems } = Astro.props;
+---
+
+<Layout
+  title={`Doa Tag: ${tag}`}
+  description={`Daftar doa dengan tag ${tag}`}
+  pageTitle={`Doa dengan tag: ${tag}`}
+>
+  <main class='p-6 bg-purple grid gap-4'>
+    <div>
+      <Button href='/doa/'>&larr; Kembali ke Kumpulan Doa</Button>
+    </div>
+
+    <div class='grid gap-4 md:grid-cols-2'>
+      {
+        doaItems.map((item) => (
+          <article class='doa-card'>
+            <h2 class='dm-serif text-2xl'>{item.doa}</h2>
+            {item.artinya && <p class='poppins mt-3 text-sm md:text-base'>{item.artinya}</p>}
+            <div class='mt-4'>
+              <Button href={`/doa/${getDoaSlug(item)}/`}>Lihat Detail Doa &rarr;</Button>
+            </div>
+          </article>
+        ))
+      }
+    </div>
+  </main>
+</Layout>
+
+<style>
+  .doa-card {
+    border: 3px solid #000;
+    background: #fff;
+    padding: 1rem;
+    box-shadow: 5px 5px 0 #000;
+    overflow: hidden;
+  }
+
+  .doa-card h2,
+  .doa-card p {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+</style>
